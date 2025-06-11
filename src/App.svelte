@@ -44,6 +44,12 @@
     return romanos[sigloNumero - 10]; // Restamos 10 porque empezamos en el siglo XI (1000s)
   }
 
+  // CORREGIDO: Función para obtener el siglo base (1000, 1100, etc.) desde un año
+  function obtenerSiglo(anio) {
+    if (!anio) return null;
+    return Math.floor(anio / 100) * 100;
+  }
+
   // Devuelve el nombre del archivo SVG correspondiente según la cantidad de visitas anuales.
   function svgPorAltura(altura) {
     if (altura < 18) return "menosde18.svg";
@@ -71,40 +77,24 @@
 
   // Hace que los SVGs se carguen automáticamente cuando la visualización aparece en pantalla.
   onMount(() => {
+    monumentos.forEach(m => {
+      m.altura = +m.altura;
+      m.anio = +m.anio;
+      m.visitas = +m.visitas;
+      m.calificacion = m.calificacion?.trim();
+      m.continente = m.continente?.trim();
+    });
     fetchSVGs();
     
     // Crear elementos flotantes con posiciones aleatorias
-    floatingElements = monumentNames.map((name, index) => ({
+    floatingElements = monumentNames.map(name => ({
       name,
-      x: Math.random() * 80 + 10, // 10% a 90% del ancho
-      y: Math.random() * 80 + 10, // 10% a 90% del alto
-      delay: Math.random() * 5, // Delay aleatorio para animación
-      duration: 15 + Math.random() * 10 // Duración de animación variable
+      x: Math.random() * 80 + 10,
+      y: Math.random() * 80 + 10,
+      delay: Math.random() * 5,
+      duration: 15 + Math.random() * 10
     }));
   });
-
-  function aplicarFiltroInteractivo(monumento) {
-    filtroSigloActivo = Math.floor(monumento.anio / 100) * 100;
-    filtroContinenteActivo = monumento.continente;
-    filtroCalificacionActiva = monumento.calificacion;
-    filtroAlturaActiva = svgPorAltura(monumento.altura);
-  }
-
-  function aplicarFiltros(monumento) {
-    if (filtroSigloActivo && !(monumento.anio >= filtroSigloActivo && monumento.anio < filtroSigloActivo + 100)) return false;
-    if (filtroContinenteActivo && monumento.continente !== filtroContinenteActivo) return false;
-    if (filtroCalificacionActiva && monumento.calificacion !== filtroCalificacionActiva) return false;
-    if (filtroAlturaActiva && svgPorAltura(monumento.altura) !== filtroAlturaActiva) return false;
-    return true;
-  }
-
-  $: monumentosFiltrados = monumentos.filter(aplicarFiltros);
-
-  function getMonumentosPorCelda(continente, siglo) {
-    return monumentosFiltrados
-      .filter(m => m.continente === continente && m.anio >= siglo && m.anio < siglo + 100)
-      .slice(0, 9);
-  }
 
   function showTooltip(event, m) {
     if (!tooltip) return;
@@ -153,19 +143,76 @@
     activeColumn = null;
   }
 
-  // Filtros interactivos
-  let filtroSigloActivo = null;
-  let filtroContinenteActivo = null;
-  let filtroCalificacionActiva = null;
-  let filtroAlturaActiva = null;  
+  // FILTROS CORREGIDOS
+  let filtrosFormas = [];
+  let filtrosColores = [];
+  let filtrosSiglos = [];
+  let filtrosContinentes = [];
+
+  // Toggle de valores dentro de un filtro
+  function toggleValor(array, valor) {
+    console.log("Toggle valor:", valor, "en array:", array);
+    const index = array.indexOf(valor);
+    if (index === -1) {
+      array.push(valor);
+      console.log("Agregado. Array ahora:", array);
+    } else {
+      array.splice(index, 1);
+      console.log("Removido. Array ahora:", array);
+    }
+    
+    // Forzar reactividad de manera más explícita
+    if (array === filtrosFormas) {
+      filtrosFormas = [...filtrosFormas];
+    } else if (array === filtrosColores) {
+      filtrosColores = [...filtrosColores];
+    } else if (array === filtrosSiglos) {
+      filtrosSiglos = [...filtrosSiglos];
+    } else if (array === filtrosContinentes) {
+      filtrosContinentes = [...filtrosContinentes];
+    }
+  }
+
   $: monumentosFiltrados = monumentos.filter(m => {
-    return (!filtroSigloActivo || (m.anio >= filtroSigloActivo && m.anio < filtroSigloActivo + 100)) &&
-           (!filtroContinenteActivo || m.continente === filtroContinenteActivo) &&
-           (!filtroCalificacionActiva || m.calificacion === filtroCalificacionActiva) &&
-           (!filtroAlturaActiva || svgPorAltura(m.altura) === filtroAlturaActiva);
+    const forma = svgPorAltura(m.altura);
+    const color = m.calificacion;
+    const continente = m.continente;
+    const siglo = obtenerSiglo(m.anio);
+
+    return (!filtrosFormas.length || filtrosFormas.includes(forma)) &&
+          (!filtrosColores.length || filtrosColores.includes(color)) &&
+          (!filtrosContinentes.length || filtrosContinentes.includes(continente)) &&
+          (!filtrosSiglos.length || filtrosSiglos.includes(siglo));
   });
-  
-  //Landing page functions
+
+
+  // CORREGIDO: Función para determinar si un monumento pasa todos los filtros
+  function cumpleFiltros(m) {
+    const forma = svgPorAltura(m.altura)?.trim();
+    const color = m.calificacion?.trim();
+    const continente = m.continente?.trim();
+    const siglo = Math.floor(m.anio / 100) * 100;
+
+    return (!filtrosFormas.length || filtrosFormas.includes(forma)) &&
+          (!filtrosColores.length || filtrosColores.includes(color)) &&
+          (!filtrosContinentes.length || filtrosContinentes.includes(continente)) &&
+          (!filtrosSiglos.length || filtrosSiglos.includes(siglo));
+  }
+
+  // Función para obtener monumentos por celda (limitado a 9)
+  function getMonumentosPorCelda(continente, siglo) {
+    return monumentos
+      .filter(m => 
+        m.continente === continente &&
+        m.anio >= siglo &&
+        m.anio < siglo + 100 &&
+        cumpleFiltros(m)
+      )
+      .slice(0, 9);
+  }
+
+
+  // Landing page functions
   function mostrarContenido() {
     mostrarVisualizacion = true;
   }
@@ -175,6 +222,15 @@
     // Scroll to top when returning to landing
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
+
+  // Función para limpiar todos los filtros
+  function limpiarFiltros() {
+    filtrosFormas = [];
+    filtrosColores = [];
+    filtrosSiglos = [];
+    filtrosContinentes = [];
+  }
+
 </script>
 
 {#if !mostrarVisualizacion}
@@ -210,7 +266,7 @@
       <div class="hero-section">
         <div class="hero-content">
           <h1>Monumentos icónicos del mundo</h1>
-          <h2>Una mirada visual a los monumentos más representativos de la historia global contruidos entre el año 1000 y 1999.</h2>
+          <h2>Una mirada visual a los monumentos más representativos de la historia global construidos entre el año 1000 y 1999.</h2>
         </div>
       </div>
       
@@ -218,90 +274,125 @@
         <div class="leyenda-container">
           <div class="altura">
             <h3>Altura (medida en metros)</h3>
+
             <div class="formas">
-              <div class="forma">
+              <button class="forma" 
+                class:selected={filtrosFormas.includes("menosde18.svg")}  
+                on:click={() => toggleValor(filtrosFormas, "menosde18.svg")}>
                 <img src="/images/menosde18.svg" alt="Menos de 18 metros de altura"/>
                 <span>Menos de 18</span>
-              </div>
-              <div class="forma">
-                <img src="/images/18a25.svg" alt="Entre 18 y 25 metros de altura"/>
+              </button>
+              <button class="forma"
+                class:selected={filtrosFormas.includes("18a25.svg")}  
+                on:click={() => toggleValor(filtrosFormas, "18a25.svg")}>
+                <img src="/images/18a25.svg" alt="18–25 metros de altura"/>
                 <span>18–25</span>
-              </div>
-              <div class="forma">
-                <img src="/images/25a30.svg" alt="Entre 25 y 30 metros de altura"/>
+              </button>
+              <button class="forma" 
+                class:selected={filtrosFormas.includes("25a30.svg")}  
+                on:click={() => toggleValor(filtrosFormas, "25a30.svg")}>
+                <img src="/images/25a30.svg" alt="25–30 metros de altura"/>
                 <span>25–30</span>
-              </div>
-              <div class="forma">
+              </button>
+              <button class="forma" 
+                class:selected={filtrosFormas.includes("30a38.svg")}  
+                on:click={() => toggleValor(filtrosFormas, "30a38.svg")}>
                 <img src="/images/30a38.svg" alt="Entre 30 y 38 metros de altura"/>
                 <span>30–38</span>
-              </div>
-              <div class="forma">
+              </button>
+              <button class="forma" 
+                class:selected={filtrosFormas.includes("38a47.svg")}  
+                on:click={() => toggleValor(filtrosFormas, "38a47.svg")}>
                 <img src="/images/38a47.svg" alt="Entre 38 y 47 metros de altura"/>
                 <span>38–47</span>
-              </div>
-              <div class="forma">
+              </button>
+              <button class="forma" 
+                class:selected={filtrosFormas.includes("47a60.svg")}  
+                on:click={() => toggleValor(filtrosFormas, "47a60.svg")}>
                 <img src="/images/47a60.svg" alt="Entre 47 y 60 metros de altura"/>
                 <span>47–60</span>
-              </div>
-              <div class="forma">
+              </button>
+              <button class="forma" 
+                class:selected={filtrosFormas.includes("60a80.svg")}  
+                on:click={() => toggleValor(filtrosFormas, "60a80.svg")}>
                 <img src="/images/60a80.svg" alt="Entre 60 y 80 metros de altura"/>
                 <span>60–80</span>
-              </div>
-              <div class="forma">
+              </button>
+              <button class="forma" 
+                class:selected={filtrosFormas.includes("80a130.svg")}  
+                on:click={() => toggleValor(filtrosFormas, "80a130.svg")}>
                 <img src="/images/80a130.svg" alt="Entre 80 y 130 metros de altura"/>
                 <span>80–130</span>
-              </div>
-              <div class="forma">
+              </button>
+              <button class="forma" 
+                class:selected={filtrosFormas.includes("masde130.svg")}  
+                on:click={() => toggleValor(filtrosFormas, "masde130.svg")}>
                 <img src="/images/masde130.svg" alt="Más de 130 metros de altura"/>
                 <span>Más de 130</span>
-              </div>
+              </button>
             </div>
           </div>
 
           <div class="calificacion"> 
             <h3>Calificación (medido en cantidad de visitas)</h3>
             <div class="colores">
-              <div class="color">
+              <button class="color"
+                class:selected={filtrosColores.includes("Malo")}
+                on:click={() => toggleValor(filtrosColores, 'Malo')}>
                 <div class="color-circle" style="background-color: #912F27;"></div>
                 <span class="color-name">Malo</span>
-              </div>
-              <div class="color">
+              </button>
+              <button class="color"
+                class:selected={filtrosColores.includes("Regular")}
+                on:click={() => toggleValor(filtrosColores, 'Regular')}>
                 <div class="color-circle" style="background-color: #EA7B4D;"></div>
                 <span class="color-name">Regular</span>
-              </div>
-              <div class="color">
+              </button>
+              <button class="color"
+                class:selected={filtrosColores.includes("Bueno")}
+                on:click={() => toggleValor(filtrosColores, 'Bueno')}>
                 <div class="color-circle" style="background-color: #A2D4D3;"></div>
                 <span class="color-name">Bueno</span>
-              </div>
-              <div class="color">
+              </button>
+              <button class="color"
+                class:selected={filtrosColores.includes("Excelente")}
+                on:click={() => toggleValor(filtrosColores, 'Excelente')}>
                 <div class="color-circle" style="background-color: #3B7B78;"></div>
                 <span class="color-name">Excelente</span>
-              </div>
+              </button>
             </div>
           </div>
-        </div>
 
+          <!-- Botón para limpiar filtros -->
+          {#if filtrosFormas.length > 0 || filtrosColores.length > 0 || filtrosSiglos.length > 0 || filtrosContinentes.length > 0}
+            <div class="filtros-actions">
+              <button class="limpiar-btn" on:click={limpiarFiltros}>
+                Limpiar todos los filtros
+              </button>
+            </div>
+          {/if}
+        </div>
       </div>
 
       <div class="matriz-container">
-
         <div class="intro"> 
           Cada columna representa un siglo. Cada fila, un continente. Cada figura, un monumento. Todo en una sola vista.  
           <div class="instrucciones">
             <p>Pase el cursor sobre un monumento para ver sus detalles. Pase el cursor sobre un siglo para ver su información</p>
-        </div>       
+          </div>       
         </div>
         
-
-       
         <!-- Fila de siglos en números romanos (arriba) -->
         <div class="fila fila-siglos">
-              <div class="label-y">Siglos</div>
+          <div class="label-y">Siglos</div>
           <div class="celdas-header">
             {#each siglos as siglo}
-              <div 
+              <button 
+                type="button"
                 class="siglo-label" 
                 class:active={activeColumn === siglo}
+                class:selected={filtrosSiglos.includes(siglo)}
+                on:click={() => toggleValor(filtrosSiglos, siglo)}
                 on:mouseenter={(e) => {
                   setActiveColumn(siglo);
                   showSigloTooltip(e, siglo);
@@ -310,12 +401,10 @@
                   clearActiveColumn();
                   hideTooltip();
                 }}
-                role="button"
-                tabindex="0"
                 aria-label={`Siglo ${sigloARomano(siglo)}, años ${siglo} a ${siglo + 99}`}
               >
                 {sigloARomano(siglo)}
-              </div>
+              </button>
             {/each}
           </div>
         </div>
@@ -323,26 +412,25 @@
         <div class="matriz">
           {#each continentes as cont}
             <div class="fila">
-              <div class="label-y">{cont}</div>
+              <button type="button"
+                      class="label-y"
+                      class:selected={filtrosContinentes.includes(cont)}
+                      on:click={() => toggleValor(filtrosContinentes, cont)}>
+                {cont}
+              </button>
               <div class="celdas">
                 {#each siglos as siglo}
                   <div class="celda" class:active-celda={activeColumn === siglo}>
                     <div class="grid-3x3">
-                      {#each Array(9).fill(null) as _, index}
-                        <div class="celda-pequena">
-                          {#if getMonumentosPorCelda(cont, siglo)[index]}
-                            {@const m = getMonumentosPorCelda(cont, siglo)[index]}
-                            <div
-                              class="monumento"
-                              style="color: {colorCalificacion(m.calificacion)}"
-                              on:mousemove={(e) => showTooltip(e, m)}
-                              on:mouseleave={hideTooltip}
-                              role="img"
-                              aria-label={`Monumento: ${m.nombre}, ${m.calificacion}, ${m.visitas}M visitas`}
-                            >
-                              {@html svgMap[svgPorAltura(m.altura)] || ''}
-                            </div>
-                          {/if}
+                      {#each monumentosFiltrados.filter(m => m.continente === cont && obtenerSiglo(m.anio) === siglo).slice(0, 9) as m}
+
+                        <div class="monumento visible"
+                            style="color: {colorCalificacion(m.calificacion)}"
+                            role = "img"
+                            on:mousemove={(e) => showTooltip(e, m)}
+                            on:mouseleave={hideTooltip}>
+
+                          {@html svgMap[svgPorAltura(m.altura)]}
                         </div>
                       {/each}
                     </div>
@@ -352,6 +440,7 @@
             </div>
           {/each}
         </div>
+
       </div>
 
       <!-- Botón para volver -->
