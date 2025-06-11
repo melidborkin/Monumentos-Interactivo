@@ -135,12 +135,34 @@
     tooltip.style.top = event.pageY + 15 + "px";
   }
 
+  function showContinenteTooltip(event, continente) {
+    if (!tooltip) return;
+    tooltip.innerHTML = `
+      <div class="tooltip-box">
+        <div class="tooltip-header tooltip-header-continente">
+          <strong>${continente}</strong>
+        </div>
+      </div>
+    `;
+    tooltip.style.display = "block";
+    tooltip.style.left = event.pageX + 15 + "px";
+    tooltip.style.top = event.pageY + 15 + "px";
+  }
+
   function setActiveColumn(siglo) {
     activeColumn = siglo;
   }
 
   function clearActiveColumn() {
     activeColumn = null;
+  }
+
+  function setActiveRow(cont) {
+    activeRow = cont;
+  }
+
+  function clearActiveRow() {
+    activeRow = null;
   }
 
   // FILTROS CORREGIDOS
@@ -270,6 +292,19 @@
         </div>
       </div>
       
+      <div class="matriz-container">
+        <div class="intro"> 
+          Cada columna representa un siglo. Cada fila, un continente. Cada figura, un monumento. Todo en una sola vista.  
+          <div class="instrucciones">
+            <p>Pase el cursor sobre un monumento para ver sus detalles. Pase el cursor sobre un siglo para ver su información</p>
+          </div> 
+           <div class="instrucciones-filtros">
+            <p>Para filtrar la matriz podes seleccionar las <b>formas</b> (según altura), los <b>colores</b> (según calificación) 
+              y los <b>siglos</b> y/o <b>continentes</b>.</p>
+            <p>Para limpiar los filtros, podes deseleccionar o hacer click en el botón "Limpiar todos los filtros".</p>
+          </div>      
+        </div>
+
       <div class="sistema">
         <div class="leyenda-container">
           <div class="altura">
@@ -278,57 +313,93 @@
             <div class="formas">
               <button class="forma" 
                 class:selected={filtrosFormas.includes("menosde18.svg")}  
-                on:click={() => toggleValor(filtrosFormas, "menosde18.svg")}>
+                on:click={() => {
+                  toggleValor(filtrosFormas, "menosde18.svg");
+                  const el = document.getElementById("matriz-container");
+                  el?.scrollIntoView({ behavior: "smooth", block: "start" });
+                }}>
                 <img src="/images/menosde18.svg" alt="Menos de 18 metros de altura"/>
-                <span>Menos de 18</span>
+                <span class="color-name">Menos de 18</span>
               </button>
               <button class="forma"
                 class:selected={filtrosFormas.includes("18a25.svg")}  
-                on:click={() => toggleValor(filtrosFormas, "18a25.svg")}>
+                on:click={() => {
+                  toggleValor(filtrosFormas, "18a25.svg");
+                  const el = document.getElementById("matriz-container");
+                  el?.scrollIntoView({ behavior: "smooth", block: "start" });
+                }}>
                 <img src="/images/18a25.svg" alt="18–25 metros de altura"/>
-                <span>18–25</span>
+                <span class="color-name">18–25</span>
               </button>
               <button class="forma" 
                 class:selected={filtrosFormas.includes("25a30.svg")}  
-                on:click={() => toggleValor(filtrosFormas, "25a30.svg")}>
+                on:click={() => {
+                  toggleValor(filtrosFormas, "25a30.svg");
+                  const el = document.getElementById("matriz-container");
+                  el?.scrollIntoView({ behavior: "smooth", block: "start" });
+                }}>
                 <img src="/images/25a30.svg" alt="25–30 metros de altura"/>
-                <span>25–30</span>
+                <span class="color-name">25–30</span>
               </button>
               <button class="forma" 
                 class:selected={filtrosFormas.includes("30a38.svg")}  
-                on:click={() => toggleValor(filtrosFormas, "30a38.svg")}>
+                on:click={() => {
+                  toggleValor(filtrosFormas, "30a38.svg");
+                  const el = document.getElementById("matriz-container");
+                  el?.scrollIntoView({ behavior: "smooth", block: "start" });
+                }}>
                 <img src="/images/30a38.svg" alt="Entre 30 y 38 metros de altura"/>
-                <span>30–38</span>
+                <span class="color-name">30–38</span>
               </button>
               <button class="forma" 
                 class:selected={filtrosFormas.includes("38a47.svg")}  
-                on:click={() => toggleValor(filtrosFormas, "38a47.svg")}>
+                on:click={() => {
+                  toggleValor(filtrosFormas, "38a47.svg");
+                  const el = document.getElementById("matriz-container");
+                  el?.scrollIntoView({ behavior: "smooth", block: "start" });
+                }}>
                 <img src="/images/38a47.svg" alt="Entre 38 y 47 metros de altura"/>
-                <span>38–47</span>
+                <span class="color-name">38–47</span>
               </button>
               <button class="forma" 
                 class:selected={filtrosFormas.includes("47a60.svg")}  
-                on:click={() => toggleValor(filtrosFormas, "47a60.svg")}>
+                on:click={() => {
+                  toggleValor(filtrosFormas, "47a60.svg");
+                  const el = document.getElementById("matriz-container");
+                  el?.scrollIntoView({ behavior: "smooth", block: "start" });
+                }}>
                 <img src="/images/47a60.svg" alt="Entre 47 y 60 metros de altura"/>
-                <span>47–60</span>
+                <span class="color-name">47–60</span>
               </button>
               <button class="forma" 
                 class:selected={filtrosFormas.includes("60a80.svg")}  
-                on:click={() => toggleValor(filtrosFormas, "60a80.svg")}>
+                on:click={() => {
+                  toggleValor(filtrosFormas, "60a80.svg");
+                  const el = document.getElementById("matriz-container");
+                  el?.scrollIntoView({ behavior: "smooth", block: "start" });
+                }}>
                 <img src="/images/60a80.svg" alt="Entre 60 y 80 metros de altura"/>
-                <span>60–80</span>
+                <span class="color-name">60–80</span>
               </button>
               <button class="forma" 
                 class:selected={filtrosFormas.includes("80a130.svg")}  
-                on:click={() => toggleValor(filtrosFormas, "80a130.svg")}>
+                on:click={() => {
+                  toggleValor(filtrosFormas, "80a130.svg");
+                  const el = document.getElementById("matriz-container");
+                  el?.scrollIntoView({ behavior: "smooth", block: "start" });
+                }}>
                 <img src="/images/80a130.svg" alt="Entre 80 y 130 metros de altura"/>
-                <span>80–130</span>
+                <span class="color-name">80–130</span>
               </button>
               <button class="forma" 
                 class:selected={filtrosFormas.includes("masde130.svg")}  
-                on:click={() => toggleValor(filtrosFormas, "masde130.svg")}>
+                on:click={() => {
+                  toggleValor(filtrosFormas, "masde130.svg");
+                  const el = document.getElementById("matriz-container");
+                  el?.scrollIntoView({ behavior: "smooth", block: "start" });
+                }}>
                 <img src="/images/masde130.svg" alt="Más de 130 metros de altura"/>
-                <span>Más de 130</span>
+                <span class="color-name">Más de 130</span>
               </button>
             </div>
           </div>
@@ -338,25 +409,41 @@
             <div class="colores">
               <button class="color"
                 class:selected={filtrosColores.includes("Malo")}
-                on:click={() => toggleValor(filtrosColores, 'Malo')}>
+                on:click={() => {
+                  toggleValor(filtrosColores, 'Malo');
+                  const el = document.getElementById("matriz-container");
+                  el?.scrollIntoView({ behavior: "smooth", block: "start" });
+                }}>
                 <div class="color-circle" style="background-color: #912F27;"></div>
                 <span class="color-name">Malo</span>
               </button>
               <button class="color"
                 class:selected={filtrosColores.includes("Regular")}
-                on:click={() => toggleValor(filtrosColores, 'Regular')}>
+                on:click={() => {
+                  toggleValor(filtrosColores, 'Regular');
+                  const el = document.getElementById("matriz-container");
+                  el?.scrollIntoView({ behavior: "smooth", block: "start" });
+                }}>
                 <div class="color-circle" style="background-color: #EA7B4D;"></div>
                 <span class="color-name">Regular</span>
               </button>
               <button class="color"
                 class:selected={filtrosColores.includes("Bueno")}
-                on:click={() => toggleValor(filtrosColores, 'Bueno')}>
+                on:click={() => {
+                  toggleValor(filtrosColores, 'Bueno');
+                  const el = document.getElementById("matriz-container");
+                  el?.scrollIntoView({ behavior: "smooth", block: "start" });
+                }}>
                 <div class="color-circle" style="background-color: #A2D4D3;"></div>
                 <span class="color-name">Bueno</span>
               </button>
               <button class="color"
                 class:selected={filtrosColores.includes("Excelente")}
-                on:click={() => toggleValor(filtrosColores, 'Excelente')}>
+                on:click={() => {
+                  toggleValor(filtrosColores, 'Excelente');
+                  const el = document.getElementById("matriz-container");
+                  el?.scrollIntoView({ behavior: "smooth", block: "start" });
+                }}>
                 <div class="color-circle" style="background-color: #3B7B78;"></div>
                 <span class="color-name">Excelente</span>
               </button>
@@ -373,15 +460,8 @@
           {/if}
         </div>
       </div>
-
-      <div class="matriz-container">
-        <div class="intro"> 
-          Cada columna representa un siglo. Cada fila, un continente. Cada figura, un monumento. Todo en una sola vista.  
-          <div class="instrucciones">
-            <p>Pase el cursor sobre un monumento para ver sus detalles. Pase el cursor sobre un siglo para ver su información</p>
-          </div>       
-        </div>
         
+        <div id="matriz-container" class="matriz">
         <!-- Fila de siglos en números romanos (arriba) -->
         <div class="fila fila-siglos">
           <div class="label-y">Siglos</div>
@@ -415,7 +495,17 @@
               <button type="button"
                       class="label-y"
                       class:selected={filtrosContinentes.includes(cont)}
-                      on:click={() => toggleValor(filtrosContinentes, cont)}>
+                      on:click={() => toggleValor(filtrosContinentes, cont)}
+                      on:mouseenter={(e) => {
+                        setActiveRow(cont);
+                        showSigloTooltip(e, cont);
+                      }}
+                      on:mouseleave={() => {
+                        clearActiveRow();
+                        hideTooltip();
+                      }}
+                      aria-label={`Continente ${cont}`}
+                    >
                 {cont}
               </button>
               <div class="celdas">
@@ -442,6 +532,7 @@
         </div>
 
       </div>
+    </div>
 
       <!-- Botón para volver -->
       <div class="volver-container">
